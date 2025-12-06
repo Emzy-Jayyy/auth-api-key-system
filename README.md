@@ -48,14 +48,50 @@ DB_DATABASE=auth_db
 ```
 
 ## Database Setup
+## Database Setup
 
+### PostgreSQL Installation
+
+**macOS:**
 ```bash
-# Create database
-mysql -u root -p
-CREATE DATABASE auth_db;
+brew install postgresql
+brew services start postgresql
 ```
 
-The application will automatically create tables on first run (synchronize: true in development).
+**Ubuntu/Debian:**
+```bash
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+sudo systemctl start postgresql
+```
+
+**Windows:**
+Download and install from https://www.postgresql.org/download/windows/
+
+### Create Database
+```bash
+# Connect to PostgreSQL
+psql -U postgres
+
+# Create database
+CREATE DATABASE auth_db;
+
+# Exit
+\q
+```
+
+### Environment Variables
+
+Create a `.env` file:
+```env
+JWT_SECRET=your-super-secret-jwt-key-change-this
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=your-postgres-password
+DB_DATABASE=auth_db
+PORT=3000
+```
 
 ## API Endpoints
 
