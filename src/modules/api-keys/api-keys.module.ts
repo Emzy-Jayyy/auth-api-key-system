@@ -1,0 +1,14 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { PassportModule } from '@nestjs/passport';
+import { ApiKeysService } from './api-keys.service';
+import { ApiKeysController } from './api-keys.controller';
+import { ApiKey } from 'src/entities/api-key.entity';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([ApiKey]), PassportModule],
+  providers: [ApiKeysService],
+  controllers: [ApiKeysController],
+  exports: [ApiKeysService],
+})
+export class ApiKeysModule {}
