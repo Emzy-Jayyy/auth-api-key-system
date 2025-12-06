@@ -1,100 +1,471 @@
-# auth-api-key-system
+# NestJS Authentication System
 
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+A robust authentication system supporting both user login via JWT and service-to-service access via API keys.
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## Features
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+- ✅ User signup and login with JWT tokens
+- ✅ API key generation for service-to-service authentication
+- ✅ Flexible authentication (supports both JWT and API keys)
+- ✅ API key expiration and revocation
+- ✅ Secure password and API key hashing
+- ✅ TypeORM database integration
+- ✅ Full TypeScript type safety
 
-## Description
+## Tech Stack
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **NestJS** - Backend framework
+- **TypeORM** - Database ORM
+- **MySQL** - Database
+- **Passport** - Authentication middleware
+- **JWT** - Token-based authentication
+- **bcrypt** - Password and API key hashing
 
-## Project setup
+## Installation
 
 ```bash
-$ pnpm install
+# Install dependencies
+npm install
+
+# Configure environment variables (see .env.example)
+cp .env.example .env
+
+# Run the application
+npm run start:dev
 ```
 
-## Compile and run the project
+## Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+JWT_SECRET=your-super-secret-jwt-key-change-this
+DB_HOST=localhost
+DB_PORT=3306
+DB_USERNAME=root
+DB_PASSWORD=password
+DB_DATABASE=auth_db
+```
+
+## Database Setup
 
 ```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+# Create database
+mysql -u root -p
+CREATE DATABASE auth_db;
 ```
 
-## Run tests
+The application will automatically create tables on first run (synchronize: true in development).
+
+## API Endpoints
+
+### Authentication
+
+#### Signup
+```http
+POST /auth/signup
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "password123",
+  "name": "John Doe"
+}
+```
+
+**Response:**
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "name": "John Doe"
+  }
+}
+```
+
+#### Login
+```http
+POST /auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
+
+**Response:**
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "name": "John Doe"
+  }
+}
+```
+
+#### Get Profile
+```http
+GET /auth/profile
+Authorization: Bearer <your-jwt-token>
+```
+
+**Response:**
+```json
+{
+  "userId": "uuid",
+  "email": "user@example.com"
+}
+```
+
+### API Key Management
+
+#### Create API Key
+```http
+POST /keys/create
+Authorization: Bearer <your-jwt-token>
+Content-Type: application/json
+
+{
+  "name": "Production Service Key",
+  "expiresAt": "2025-12-31T23:59:59Z"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "name": "Production Service Key",
+  "key": "sk_live_abc123def456...",
+  "prefix": "sk_live_abc123d",
+  "expiresAt": "2025-12-31T23:59:59Z",
+  "createdAt": "2024-01-15T10:30:00Z"
+}
+```
+
+⚠️ **Important:** The `key` field is only returned once. Store it securely.
+
+#### List API Keys
+```http
+GET /keys
+Authorization: Bearer <your-jwt-token>
+```
+
+**Response:**
+```json
+[
+  {
+    "id": "uuid",
+    "name": "Production Service Key",
+    "prefix": "sk_live_abc123d",
+    "isRevoked": false,
+    "expiresAt": "2025-12-31T23:59:59Z",
+    "lastUsedAt": "2024-01-15T12:00:00Z",
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+]
+```
+
+#### Revoke API Key
+```http
+DELETE /keys/:keyId
+Authorization: Bearer <your-jwt-token>
+```
+
+**Response:**
+```json
+{
+  "message": "API key revoked successfully"
+}
+```
+
+### Protected Routes Examples
+
+#### JWT Only Route
+```http
+GET /user-only
+Authorization: Bearer <your-jwt-token>
+```
+
+#### API Key Only Route
+```http
+GET /service-only
+X-API-Key: sk_live_abc123def456...
+```
+
+#### Flexible Route (JWT or API Key)
+```http
+# With JWT
+GET /flexible
+Authorization: Bearer <your-jwt-token>
+
+# OR with API Key
+GET /flexible
+X-API-Key: sk_live_abc123def456...
+```
+
+## Authentication Methods
+
+### 1. JWT Authentication
+Used for regular user access. Include the token in the Authorization header:
+
+```
+Authorization: Bearer <your-jwt-token>
+```
+
+### 2. API Key Authentication
+Used for service-to-service communication. Include the API key in a custom header:
+
+```
+X-API-Key: sk_live_abc123def456...
+```
+
+### 3. Flexible Authentication
+Endpoints can accept either JWT or API Key, providing maximum flexibility for different clients.
+
+## Guard Usage in Controllers
+
+```typescript
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { ApiKeyGuard } from './api-keys/guards/api-key.guard';
+import { FlexibleAuthGuard } from './api-keys/guards/flexible-auth.guard';
+import { CurrentUser } from './auth/decorators/current-user.decorator';
+
+@Controller('example')
+export class ExampleController {
+  
+  // JWT only
+  @UseGuards(JwtAuthGuard)
+  @Get('user-endpoint')
+  getUserData(@CurrentUser() user) {
+    return { userId: user.userId };
+  }
+
+  // API Key only
+  @UseGuards(ApiKeyGuard)
+  @Get('service-endpoint')
+  getServiceData(@CurrentUser() user) {
+    return { keyId: user.keyId };
+  }
+
+  // Either JWT or API Key
+  @UseGuards(FlexibleAuthGuard)
+  @Get('flexible-endpoint')
+  getFlexibleData(@CurrentUser() user) {
+    return { userId: user.userId };
+  }
+}
+```
+
+## Security Features
+
+### Password Security
+- Passwords hashed using bcrypt with salt rounds of 10
+- Never stored or transmitted in plain text
+
+### API Key Security
+- Keys generated using cryptographically secure random bytes
+- Keys hashed before storage (not reversible)
+- Plain text key returned only once during creation
+- Keys prefixed with `sk_live_` for easy identification
+
+### API Key Management
+- **Expiration**: Keys can have expiration dates
+- **Revocation**: Keys can be revoked (soft delete)
+- **Tracking**: Last usage timestamp recorded
+- **Scoping**: Keys tied to specific users
+
+### Input Validation
+- All DTOs use class-validator decorators
+- Email format validation
+- Password minimum length enforcement
+- Request body whitelist filtering
+
+## Project Structure
+
+```
+src/
+├── auth/
+│   ├── decorators/
+│   │   └── current-user.decorator.ts
+│   ├── dto/
+│   │   ├── login.dto.ts
+│   │   └── signup.dto.ts
+│   ├── guards/
+│   │   └── jwt-auth.guard.ts
+│   ├── strategies/
+│   │   └── jwt.strategy.ts
+│   ├── types/
+│   │   ├── auth-user.type.ts
+│   │   └── request-with-user.interface.ts
+│   ├── auth.controller.ts
+│   ├── auth.module.ts
+│   └── auth.service.ts
+├── users/
+│   ├── entities/
+│   │   └── user.entity.ts
+│   ├── users.module.ts
+│   └── users.service.ts
+├── api-keys/
+│   ├── dto/
+│   │   └── create-api-key.dto.ts
+│   ├── entities/
+│   │   └── api-key.entity.ts
+│   ├── guards/
+│   │   ├── api-key.guard.ts
+│   │   └── flexible-auth.guard.ts
+│   ├── strategies/
+│   │   └── api-key.strategy.ts
+│   ├── api-keys.controller.ts
+│   ├── api-keys.module.ts
+│   └── api-keys.service.ts
+├── app.controller.ts
+├── app.module.ts
+└── main.ts
+```
+
+## Testing
+
+### Manual Testing with cURL
 
 ```bash
-# unit tests
-$ pnpm run test
+# Signup
+curl -X POST http://localhost:3000/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"password123","name":"Test User"}'
 
-# e2e tests
-$ pnpm run test:e2e
+# Login
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"password123"}'
 
-# test coverage
-$ pnpm run test:cov
+# Create API Key
+curl -X POST http://localhost:3000/keys/create \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test Key"}'
+
+# Access with JWT
+curl http://localhost:3000/user-only \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Access with API Key
+curl http://localhost:3000/service-only \
+  -H "X-API-Key: YOUR_API_KEY"
 ```
 
-## Deployment
+### Testing with Postman/Insomnia
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+1. **Import the collection** (if provided)
+2. **Set up environment variables:**
+   - `base_url`: http://localhost:3000
+   - `jwt_token`: (will be set after login)
+   - `api_key`: (will be set after key creation)
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Common Use Cases
 
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
+### Mobile App + Backend Service
+- **Mobile App**: Uses JWT for user authentication
+- **Backend Service**: Uses API key for automated tasks
+- Both can access the same resources via flexible endpoints
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Multi-Tenant System
+- Each tenant gets their own API keys
+- Track usage per tenant via `lastUsedAt`
+- Revoke keys when tenant subscription expires
 
-## Resources
+### External Integrations
+- Third-party services use API keys
+- Internal tools use JWT
+- Same endpoints serve both with different permissions
 
-Check out a few resources that may come in handy when working with NestJS:
+## Error Handling
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+| Status Code | Error Message | Cause |
+|-------------|--------------|-------|
+| 401 | Invalid credentials | Wrong email/password during login |
+| 401 | Invalid API key | API key doesn't exist or is revoked |
+| 401 | API key missing | No X-API-Key header provided |
+| 401 | No authentication provided | Neither JWT nor API key provided |
+| 409 | Email already exists | Signup with existing email |
 
-## Support
+## Production Considerations
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### Before Deploying
 
-## Stay in touch
+1. **Disable TypeORM Synchronize**
+   ```typescript
+   TypeOrmModule.forRoot({
+     synchronize: false, // CRITICAL: Set to false
+   })
+   ```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+2. **Use Strong JWT Secret**
+   - Generate: `openssl rand -base64 32`
+   - Store in environment variable
+   - Never commit to version control
+
+3. **Add Rate Limiting**
+   ```bash
+   npm install @nestjs/throttler
+   ```
+
+4. **Enable CORS**
+   ```typescript
+   app.enableCors({
+     origin: process.env.ALLOWED_ORIGINS?.split(','),
+   });
+   ```
+
+5. **Add Logging**
+   - Log authentication attempts
+   - Log API key usage
+   - Monitor for suspicious activity
+
+6. **Database Migrations**
+   - Use TypeORM migrations instead of synchronize
+   - Version control your schema changes
+
+## Troubleshooting
+
+### "Invalid credentials" on Login
+- Verify email exists in database
+- Check password is correct
+- Ensure bcrypt comparison is working
+
+### "API key missing"
+- Check header name is exactly `X-API-Key`
+- Ensure API key is not expired
+- Verify key is not revoked
+
+### TypeORM Connection Errors
+- Verify database credentials in .env
+- Ensure database exists
+- Check MySQL is running
+
+### JWT Validation Fails
+- Verify JWT_SECRET matches between sign and verify
+- Check token hasn't expired (default 24h)
+- Ensure Bearer prefix is included
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+MIT
+
+## Support
+
+For issues and questions, please open an issue in the repository.

@@ -1,15 +1,18 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-custom';
+import { Request } from 'express';
+import { ApiKeyPayload } from 'src/utils/types/auth-user.type';
 import { ApiKeysService } from '../api-keys.service';
 
 @Injectable()
 export class ApiKeyStrategy extends PassportStrategy(Strategy, 'api-key') {
   constructor(private apiKeysService: ApiKeysService) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     super();
   }
 
-  async validate(req: Request): Promise<any> {
+  async validate(req: Request): Promise<ApiKeyPayload> {
     const apiKey = req.headers['x-api-key'];
 
     if (!apiKey || typeof apiKey !== 'string') {

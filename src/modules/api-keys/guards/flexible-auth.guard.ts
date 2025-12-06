@@ -8,13 +8,19 @@ import { AuthGuard } from '@nestjs/passport';
 @Injectable()
 export class FlexibleAuthGuard extends AuthGuard(['jwt', 'api-key']) {
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<Request>();
 
     // Try JWT first
-    if (request.headers.authorization?.startsWith('Bearer ')) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const authHeader = request.headers['authorization'];
+    if (
+      authHeader &&
+      typeof authHeader === 'string' &&
+      authHeader.startsWith('Bearer ')
+    ) {
       try {
         return (await super.canActivate(context)) as boolean;
-      } catch (error) {
+      } catch {
         // JWT failed, try API key
       }
     }
@@ -23,7 +29,7 @@ export class FlexibleAuthGuard extends AuthGuard(['jwt', 'api-key']) {
     if (request.headers['x-api-key']) {
       try {
         return (await super.canActivate(context)) as boolean;
-      } catch (error) {
+      } catch {
         throw new UnauthorizedException('Invalid authentication');
       }
     }
@@ -31,4 +37,3 @@ export class FlexibleAuthGuard extends AuthGuard(['jwt', 'api-key']) {
     throw new UnauthorizedException('No authentication provided');
   }
 }
-
