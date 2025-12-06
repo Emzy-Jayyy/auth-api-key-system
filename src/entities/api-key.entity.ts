@@ -10,8 +10,8 @@ export class ApiKey extends BaseEntity {
   @Column()
   name: string;
 
-  @Column({ length: 10 })
-  prefix: string; // First 10 chars for display: sk_live_abc...
+  @Column({ length: 20 })
+  prefix: string;
 
   @Column({ default: false })
   isRevoked: boolean;
